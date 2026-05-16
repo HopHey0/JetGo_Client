@@ -1,6 +1,5 @@
-package com.hophey.jetgo.ui.theme
+package com.hophey.jetgo.presentation.theme
 
-import android.app.Activity
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme

@@ -1,4 +1,4 @@
-package com.hophey.jetgo.ui.theme
+package com.hophey.jetgo.presentation.theme
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle

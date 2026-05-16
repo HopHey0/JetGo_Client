@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
+    id("com.google.devtools.ksp")
 }
 
 android {
@@ -56,4 +57,31 @@ dependencies {
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
+
+    // ViewModel dependency
+    implementation(libs.androidx.lifecycle.viewmodel.ktx)
+
+    // Navigation dependency
+    implementation(libs.androidx.navigation.compose)
+
+    // JSON serialization dependency
+    implementation(libs.kotlinx.serialization.json)
+
+    // Room dependencies
+    implementation(libs.androidx.room.ktx)
+    androidTestImplementation(libs.androidx.room.testing)
+    implementation(libs.androidx.room.runtime)
+    annotationProcessor(libs.androidx.room.compiler)
+    ksp(libs.androidx.room.compiler)
+
+    // Koin dependencies
+    implementation("io.insert-koin:koin-android:4.2.1")
+    implementation("io.insert-koin:koin-androidx-compose:4.2.1")
+
+    // Extended icons
+    implementation("androidx.compose.material:material-icons-extended")
+
+    // DataStore dependencies
+    implementation("androidx.datastore:datastore-preferences:1.2.1")
+    implementation("androidx.datastore:datastore-core:1.2.1")
 }
