@@ -1,34 +1,78 @@
-package com.hophey.jetgo.feature.searchFlights.presentation
+package com.hophey.jetgo.feature.searchFlights.presentation.ui
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ChevronRight
-import androidx.compose.material.icons.outlined.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.outlined.CalendarMonth
+import androidx.compose.material.icons.outlined.ConfirmationNumber
+import androidx.compose.material.icons.outlined.FavoriteBorder
+import androidx.compose.material.icons.outlined.Flight
+import androidx.compose.material.icons.outlined.FlightLand
+import androidx.compose.material.icons.outlined.FlightTakeoff
+import androidx.compose.material.icons.outlined.LocalFireDepartment
+import androidx.compose.material.icons.outlined.Person
+import androidx.compose.material.icons.outlined.Schedule
+import androidx.compose.material.icons.outlined.Search
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalLocale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
-import com.hophey.jetgo.theme.JetGoTheme
 import com.hophey.jetgo.R
+import com.hophey.jetgo.feature.searchFlights.domain.model.HotOffer
+import com.hophey.jetgo.feature.searchFlights.presentation.viewModel.FlightSearchMainScreenViewModel
+import com.hophey.jetgo.feature.searchFlights.presentation.viewModel.HotOffersUiState
+import com.hophey.jetgo.theme.JetGoTheme
+import com.hophey.jetgo.utils.toDayAndMonth
+import org.koin.androidx.compose.koinViewModel
 
 data class RecentSearch(
     val origin: String,
@@ -37,32 +81,14 @@ data class RecentSearch(
     val passengers: Int
 )
 
-data class HotOffer(
-    val country: String,
-    val price: Double,
-    val originCity: String,
-    val originAirport: String,
-    val destCity: String,
-    val destAirport: String,
-    val airlineLogoUrl: String,
-    val airlineCode: String,
-    val offerPercent: Double,
-    val departureDate: String,
-    val arrivalDate: String
-)
-
 @Composable
-fun FlightSearchRoot() {
+fun FlightSearchRoot(
+    flightSearchMainScreenViewModel: FlightSearchMainScreenViewModel = koinViewModel()
+) {
     val recentSearches = listOf(
         RecentSearch("Москва", "Белград", "16 мая", 2),
         RecentSearch("Белград", "Москва", "20 мая", 1),
         RecentSearch("Москва", "Стамбул", "1 июня", 3)
-    )
-    val hotOffers = listOf(
-        HotOffer("Турция", 56_400.0, "Москва", "SVO", "Стамбул", "IST", "https://logo-teka.com/wp-content/uploads/2025/08/aeroflot-logo-eng.png", "TK", 15.5, "08:30", "12:45"),
-        HotOffer("Сербия", 9_800.0, "Москва", "SVO", "Белград", "BEG", "https://logo-teka.com/wp-content/uploads/2025/10/lufthansa-sign-logo.png", "JU", 12.0, "09:15", "11:30"),
-        HotOffer("ОАЭ", 18_900.0, "Москва", "DME", "Дубай", "DXB", "https://logo-teka.com/wp-content/uploads/2025/10/airfrance-logo.png", "EK", 20.0, "10:00", "01:15"),
-        HotOffer("Армения", 7_200.0, "Москва", "SVO", "Ереван", "EVN", "https://logo-teka.com/wp-content/uploads/2025/11/emirates-logo.png", "G9", 10.0, "07:45", "10:20")
     )
 
     Scaffold(
@@ -71,7 +97,7 @@ fun FlightSearchRoot() {
     ) { innerPadding ->
         FlightSearchScreen(
             recentSearches = recentSearches,
-            hotOffers = hotOffers,
+            viewModel = flightSearchMainScreenViewModel,
             contentPadding = innerPadding
         )
     }
@@ -81,7 +107,7 @@ fun FlightSearchRoot() {
 @Composable
 fun FlightSearchScreen(
     recentSearches: List<RecentSearch>,
-    hotOffers: List<HotOffer>,
+    viewModel: FlightSearchMainScreenViewModel,
     contentPadding: PaddingValues = PaddingValues(0.dp)
 ) {
     var origin by remember { mutableStateOf("Москва (SVO)") }
@@ -89,7 +115,7 @@ fun FlightSearchScreen(
     var dateDepart by remember { mutableStateOf("") }
     var passengers by remember { mutableStateOf("") }
 
-    val pagerState = rememberPagerState { hotOffers.size }
+    val uiState = viewModel.uiState.collectAsStateWithLifecycle().value
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -117,9 +143,26 @@ fun FlightSearchScreen(
         item {
             SectionHeader(icon = Icons.Outlined.LocalFireDepartment, title = stringResource(R.string.section_header_hot_offers))
         }
-        item {
-            HotOffersPager(offers = hotOffers, pagerState = pagerState)
-            Spacer(modifier = Modifier.height(16.dp))
+
+        when (uiState){
+            is HotOffersUiState.Loading -> item {
+                Card(
+                ) {
+                    CircularProgressIndicator()
+                }
+            }
+
+            is HotOffersUiState.Success -> item {
+                HotOffersPager(offers = uiState.hotOffers)
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+            is HotOffersUiState.Error -> item {
+                Card() {
+                    Text(
+                        text = uiState.message
+                    )
+                }
+            }
         }
     }
 }
@@ -266,9 +309,10 @@ private fun RecentSearchList(searches: List<RecentSearch>) {
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun HotOffersPager(
-    offers: List<HotOffer>,
-    pagerState: PagerState
+    offers: List<HotOffer>
 ) {
+    val pagerState = rememberPagerState { offers.size }
+
     Column {
         HorizontalPager(
             state = pagerState,
@@ -332,14 +376,14 @@ private fun HotOfferCard(offer: HotOffer) {
                     Column {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(
-                                text = "${(offer.price * (1 - (offer.offerPercent / 100))).toInt()} ₽",
+                                text = "${offer.priceWithDiscount} ₽",
                                 fontSize = 24.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onPrimaryContainer
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = "${offer.price.toInt()} ₽",
+                                text = "${offer.price} ₽",
                                 fontSize = 20.sp,
                                 textDecoration = TextDecoration.LineThrough,
                                 color = MaterialTheme.colorScheme.onSecondaryContainer,
@@ -348,7 +392,7 @@ private fun HotOfferCard(offer: HotOffer) {
                         }
                         Spacer(modifier = Modifier.padding(vertical = 4.dp))
                         Text(
-                            text = offer.country,
+                            text = offer.arrivalCountry,
                             fontSize = 20.sp,
                             fontWeight = FontWeight.SemiBold,
                             color = MaterialTheme.colorScheme.onSurface
@@ -356,7 +400,7 @@ private fun HotOfferCard(offer: HotOffer) {
                     }
                     Box {
                         AsyncImage(
-                            model = offer.airlineLogoUrl,
+                            model = offer.airlineLogo,
                             contentDescription = null,
                             modifier = Modifier.size(56.dp)
                         )
@@ -364,11 +408,13 @@ private fun HotOfferCard(offer: HotOffer) {
                 }
 
                 Row(
-                    modifier = Modifier.height(32.dp).fillMaxWidth(),
+                    modifier = Modifier
+                        .height(32.dp)
+                        .fillMaxWidth(),
                     horizontalArrangement = Arrangement.Center
                 ){
                     Text(
-                        text = "25 мая",
+                        text = offer.departureDate.toDayAndMonth(LocalLocale.current.platformLocale.language),
                         fontSize = 16.sp,
                         color = MaterialTheme.colorScheme.onSurface
                     )
@@ -380,13 +426,13 @@ private fun HotOfferCard(offer: HotOffer) {
                 ) {
                     Column(horizontalAlignment = Alignment.Start) {
                         Text(
-                            text = offer.originCity,
+                            text = offer.departureCity,
                             fontSize = 15.sp,
                             fontWeight = FontWeight.SemiBold,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
-                            text = offer.originAirport,
+                            text = offer.departureAirport,
                             fontSize = 12.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -401,7 +447,7 @@ private fun HotOfferCard(offer: HotOffer) {
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = offer.departureDate,
+                                text = offer.departureTime,
                                 fontSize = 12.sp,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -409,7 +455,7 @@ private fun HotOfferCard(offer: HotOffer) {
                             Spacer(modifier = Modifier.weight(1f))
 
                             Text(
-                                text = offer.arrivalDate,
+                                text = offer.arrivalTime,
                                 fontSize = 12.sp,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -418,7 +464,9 @@ private fun HotOfferCard(offer: HotOffer) {
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             HorizontalDivider(
-                                modifier = Modifier.weight(1f).padding(horizontal = 4.dp),
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .padding(horizontal = 4.dp),
                                 color = MaterialTheme.colorScheme.outlineVariant,
                                 thickness = 1.dp
                             )
@@ -429,13 +477,15 @@ private fun HotOfferCard(offer: HotOffer) {
                                 modifier = Modifier.size(18.dp)
                             )
                             HorizontalDivider(
-                                modifier = Modifier.weight(1f).padding(horizontal = 4.dp),
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .padding(horizontal = 4.dp),
                                 color = MaterialTheme.colorScheme.outlineVariant,
                                 thickness = 1.dp
                             )
                         }
                         Text(
-                            text = "4,25 ч. в пути",
+                            text = "${offer.timeTravel} " + stringResource(R.string.travel_time_text),
                             fontSize = 11.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(top = 2.dp)
@@ -443,13 +493,13 @@ private fun HotOfferCard(offer: HotOffer) {
                     }
                     Column(horizontalAlignment = Alignment.End) {
                         Text(
-                            text = offer.destCity,
+                            text = offer.arrivalCity,
                             fontSize = 15.sp,
                             fontWeight = FontWeight.SemiBold,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
-                            text = offer.destAirport,
+                            text = offer.arrivalAirport,
                             fontSize = 12.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -466,7 +516,7 @@ private fun HotOfferCard(offer: HotOffer) {
                 .padding(horizontal = 12.dp, vertical = 4.dp)
         ) {
             Text(
-                text = stringResource(R.string.hot_offer_percent_text) + " ${offer.offerPercent.toInt()} %",
+                text = stringResource(R.string.hot_offer_percent_text) + " ${offer.discountRate} %",
                 fontSize = 16.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onTertiary
@@ -622,6 +672,7 @@ fun FlightBottomNavBar() {
 @Composable
 fun FlightSearchScreenPreview() {
     JetGoTheme {
-        FlightSearchRoot()
+        val vm: FlightSearchMainScreenViewModel = koinViewModel()
+        FlightSearchRoot(vm)
     }
 }

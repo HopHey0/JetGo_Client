@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
     id("com.google.devtools.ksp")
+    kotlin("plugin.serialization")
 }
 
 android {
@@ -88,7 +89,7 @@ dependencies {
 
     // Ktor
     implementation("io.ktor:ktor-client-core:3.5.0")
-    implementation("io.ktor:ktor-client-cio:3.5.0")
+    implementation("io.ktor:ktor-client-android:3.5.0")
     implementation("io.ktor:ktor-client-logging:3.5.0")
     implementation("io.ktor:ktor-client-auth:3.5.0")
     implementation("io.ktor:ktor-client-content-negotiation:3.5.0")
