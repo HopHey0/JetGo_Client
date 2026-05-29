@@ -476,18 +476,7 @@ private fun HotOfferCard(offer: HotOffer) {
                     }
                 }
 
-                Row(
-                    modifier = Modifier
-                        .height(32.dp)
-                        .fillMaxWidth(),
-                    horizontalArrangement = Arrangement.Center
-                ){
-                    Text(
-                        text = offer.departureDate.toDayAndMonth(LocalLocale.current.platformLocale.language),
-                        fontSize = 16.sp,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                }
+                Spacer(modifier = Modifier.height(16.dp))
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -553,12 +542,28 @@ private fun HotOfferCard(offer: HotOffer) {
                                 thickness = 1.dp
                             )
                         }
-                        Text(
-                            text = "${offer.timeTravel} " + stringResource(R.string.travel_time_text),
-                            fontSize = 11.sp,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(top = 2.dp)
-                        )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
+                        ){
+                            Text(
+                                text = offer.departureDate.toDayAndMonth(LocalLocale.current.platformLocale.language),
+                                fontSize = 12.sp,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Spacer(modifier = Modifier.weight(1f))
+                            Text(
+                                text = "${offer.timeTravel} " + stringResource(R.string.travel_time_text),
+                                fontSize = 11.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(top = 2.dp)
+                            )
+                            Spacer(modifier = Modifier.weight(1f))
+                            Text(
+                                text = offer.arrivalDate.toDayAndMonth(LocalLocale.current.platformLocale.language),
+                                fontSize = 12.sp,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
                     }
                     Column(horizontalAlignment = Alignment.End) {
                         Text(

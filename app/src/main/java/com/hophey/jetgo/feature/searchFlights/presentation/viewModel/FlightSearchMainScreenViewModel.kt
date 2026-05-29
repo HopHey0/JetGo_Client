@@ -34,7 +34,7 @@ class FlightSearchMainScreenViewModel(
         getHotOffersJob = viewModelScope.launch {
             _uiState.value = HotOffersUiState.Loading
 
-            delay(5000L)
+            //delay(5000L)
             val result = getHotOffersUseCase.invoke()
 
             result
