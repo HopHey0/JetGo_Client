@@ -5,9 +5,11 @@ import androidx.lifecycle.viewModelScope
 import com.hophey.jetgo.feature.searchFlights.domain.model.HotOffer
 import com.hophey.jetgo.feature.searchFlights.domain.usecase.GetHotOffersUseCase
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import okhttp3.internal.wait
 
 sealed class HotOffersUiState {
     object Loading : HotOffersUiState()
@@ -21,7 +23,7 @@ class FlightSearchMainScreenViewModel(
     val _uiState = MutableStateFlow<HotOffersUiState>(HotOffersUiState.Loading)
     var uiState = _uiState.asStateFlow()
 
-    var getHotOffersJob: Job? = null
+    private var getHotOffersJob: Job? = null
 
     init {
         getHotOffers()
@@ -30,7 +32,9 @@ class FlightSearchMainScreenViewModel(
     fun getHotOffers() {
         getHotOffersJob?.cancel()
         getHotOffersJob = viewModelScope.launch {
+            _uiState.value = HotOffersUiState.Loading
 
+            delay(5000L)
             val result = getHotOffersUseCase.invoke()
 
             result
@@ -41,5 +45,10 @@ class FlightSearchMainScreenViewModel(
                     _uiState.value = HotOffersUiState.Error(error.message ?: "Error while loading")
                 }
         }
+    }
+
+    override fun onCleared() {
+        getHotOffersJob?.cancel()
+        super.onCleared()
     }
 }

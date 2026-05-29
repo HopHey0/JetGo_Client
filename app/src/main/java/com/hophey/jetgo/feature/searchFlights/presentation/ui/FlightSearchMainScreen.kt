@@ -16,12 +16,12 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Cancel
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.ConfirmationNumber
@@ -31,7 +31,7 @@ import androidx.compose.material.icons.outlined.FlightLand
 import androidx.compose.material.icons.outlined.FlightTakeoff
 import androidx.compose.material.icons.outlined.LocalFireDepartment
 import androidx.compose.material.icons.outlined.Person
-import androidx.compose.material.icons.outlined.Schedule
+import androidx.compose.material.icons.outlined.Replay
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -40,6 +40,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -81,15 +82,17 @@ data class RecentSearch(
     val passengers: Int
 )
 
+val recentSearches = listOf(
+    RecentSearch("Москва", "Белград", "16 мая", 2),
+    RecentSearch("Белград", "Москва", "20 мая", 1),
+    RecentSearch("Москва", "Стамбул", "1 июня", 3)
+)
+
 @Composable
 fun FlightSearchRoot(
     flightSearchMainScreenViewModel: FlightSearchMainScreenViewModel = koinViewModel()
 ) {
-    val recentSearches = listOf(
-        RecentSearch("Москва", "Белград", "16 мая", 2),
-        RecentSearch("Белград", "Москва", "20 мая", 1),
-        RecentSearch("Москва", "Стамбул", "1 июня", 3)
-    )
+    val uiState = flightSearchMainScreenViewModel.uiState.collectAsStateWithLifecycle().value
 
     Scaffold(
         bottomBar = { FlightBottomNavBar() },
@@ -97,7 +100,8 @@ fun FlightSearchRoot(
     ) { innerPadding ->
         FlightSearchScreen(
             recentSearches = recentSearches,
-            viewModel = flightSearchMainScreenViewModel,
+            uiState = uiState,
+            onRetry = flightSearchMainScreenViewModel::getHotOffers,
             contentPadding = innerPadding
         )
     }
@@ -107,15 +111,14 @@ fun FlightSearchRoot(
 @Composable
 fun FlightSearchScreen(
     recentSearches: List<RecentSearch>,
-    viewModel: FlightSearchMainScreenViewModel,
+    uiState: HotOffersUiState,
+    onRetry: () -> Unit,
     contentPadding: PaddingValues = PaddingValues(0.dp)
 ) {
     var origin by remember { mutableStateOf("Москва (SVO)") }
     var destination by remember { mutableStateOf("") }
     var dateDepart by remember { mutableStateOf("") }
     var passengers by remember { mutableStateOf("") }
-
-    val uiState = viewModel.uiState.collectAsStateWithLifecycle().value
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -131,37 +134,29 @@ fun FlightSearchScreen(
             )
         }
 
-        if (recentSearches.isNotEmpty()) {
-            item {
-                SectionHeader(icon = Icons.Outlined.Schedule, title = stringResource(R.string.section_header_recent_searches))
-            }
-            item {
-                RecentSearchList(searches = recentSearches.take(3))
-            }
-        }
+//        if (recentSearches.isNotEmpty()) {
+//            item {
+//                SectionHeader(icon = Icons.Outlined.Schedule, title = stringResource(R.string.section_header_recent_searches))
+//            }
+//            item {
+//                RecentSearchList(searches = recentSearches.take(3))
+//            }
+//        }
 
         item {
             SectionHeader(icon = Icons.Outlined.LocalFireDepartment, title = stringResource(R.string.section_header_hot_offers))
         }
 
         when (uiState){
-            is HotOffersUiState.Loading -> item {
-                Card(
-                ) {
-                    CircularProgressIndicator()
-                }
-            }
-
             is HotOffersUiState.Success -> item {
                 HotOffersPager(offers = uiState.hotOffers)
                 Spacer(modifier = Modifier.height(16.dp))
             }
-            is HotOffersUiState.Error -> item {
-                Card() {
-                    Text(
-                        text = uiState.message
-                    )
-                }
+            else -> item {
+                HotOffersErrorOrLoad(
+                    uiState,
+                    onRetry
+                )
             }
         }
     }
@@ -300,6 +295,80 @@ private fun RecentSearchList(searches: List<RecentSearch>) {
                         thickness = 1.dp,
                         modifier = Modifier.padding(horizontal = 16.dp)
                     )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun HotOffersErrorOrLoad(
+    uiState: HotOffersUiState,
+    onRetry: () -> Unit
+){
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(paddingValues = PaddingValues(16.dp))
+    ) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(192.dp)
+                .padding(top = 16.dp),
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surface
+            ),
+            elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
+        ) {
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
+            ) {
+                when (uiState) {
+                    is HotOffersUiState.Error -> {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.Cancel,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.error,
+                                modifier = Modifier.size(48.dp)
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text(
+                                text = uiState.message,
+                                fontSize = 20.sp,
+                                color = MaterialTheme.colorScheme.onSecondaryContainer,
+                            )
+                        }
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.TopEnd)
+                        ){
+                            IconButton(
+                                onClick = { onRetry() }
+                            ){
+                                Icon(
+                                    imageVector = Icons.Outlined.Replay,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onSurface,
+                                    modifier = Modifier.size(24.dp),
+                                )
+                            }
+                        }
+                    }
+
+                    is HotOffersUiState.Loading ->
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(64.dp)
+                        )
+
+                    else -> {}
                 }
             }
         }
@@ -672,7 +741,10 @@ fun FlightBottomNavBar() {
 @Composable
 fun FlightSearchScreenPreview() {
     JetGoTheme {
-        val vm: FlightSearchMainScreenViewModel = koinViewModel()
-        FlightSearchRoot(vm)
+        FlightSearchScreen(
+            recentSearches = recentSearches,
+            uiState = HotOffersUiState.Error("Error network"),
+            onRetry = { }
+        )
     }
 }
