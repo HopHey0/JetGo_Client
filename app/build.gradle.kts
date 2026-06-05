@@ -99,4 +99,7 @@ dependencies {
     implementation("io.coil-kt.coil3:coil-compose:3.4.0")
     implementation("io.coil-kt.coil3:coil-network-okhttp:3.4.0")
 
+    // DateTime
+    implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.8.0")
+
 }

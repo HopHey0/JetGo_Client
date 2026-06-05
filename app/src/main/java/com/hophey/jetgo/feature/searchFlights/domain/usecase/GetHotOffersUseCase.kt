@@ -7,7 +7,7 @@ import com.hophey.jetgo.feature.searchFlights.domain.repository.FlightRepository
 class GetHotOffersUseCase (
     private val flightRepository: FlightRepository
 ) {
-    suspend fun invoke(): Result<List<HotOffer>> = runCatching {
+    suspend operator fun invoke(): Result<List<HotOffer>> = runCatching {
         flightRepository.getHotOffers()
             .getOrThrow()
             .offers

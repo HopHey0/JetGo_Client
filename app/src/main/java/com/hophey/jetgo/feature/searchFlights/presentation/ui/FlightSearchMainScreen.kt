@@ -32,6 +32,7 @@ import androidx.compose.material.icons.outlined.FlightTakeoff
 import androidx.compose.material.icons.outlined.LocalFireDepartment
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.Replay
+import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -50,7 +51,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -58,10 +58,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalLocale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -69,10 +69,17 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import com.hophey.jetgo.R
 import com.hophey.jetgo.feature.searchFlights.domain.model.HotOffer
+import com.hophey.jetgo.feature.searchFlights.presentation.ui.bottomSheets.AirportPickerSheet
+import com.hophey.jetgo.feature.searchFlights.presentation.ui.bottomSheets.DatePickerSheet
+import com.hophey.jetgo.feature.searchFlights.presentation.ui.bottomSheets.PassengerPickerSheet
 import com.hophey.jetgo.feature.searchFlights.presentation.viewModel.FlightSearchMainScreenViewModel
-import com.hophey.jetgo.feature.searchFlights.presentation.viewModel.HotOffersUiState
+import com.hophey.jetgo.feature.searchFlights.presentation.viewModel.states.ActiveSheet
+import com.hophey.jetgo.feature.searchFlights.presentation.viewModel.states.FlightSearchParams
+import com.hophey.jetgo.feature.searchFlights.presentation.viewModel.states.HotOffersUiState
+import com.hophey.jetgo.feature.searchFlights.presentation.viewModel.states.SearchFormState
 import com.hophey.jetgo.theme.JetGoTheme
 import com.hophey.jetgo.utils.toDayAndMonth
+import kotlinx.datetime.LocalDate
 import org.koin.androidx.compose.koinViewModel
 
 data class RecentSearch(
@@ -90,20 +97,67 @@ val recentSearches = listOf(
 
 @Composable
 fun FlightSearchRoot(
-    flightSearchMainScreenViewModel: FlightSearchMainScreenViewModel = koinViewModel()
+    onNavigateToResults: (FlightSearchParams) -> Unit = {},
+    viewModel: FlightSearchMainScreenViewModel = koinViewModel()
 ) {
-    val uiState = flightSearchMainScreenViewModel.uiState.collectAsStateWithLifecycle().value
+    val hotOffersState by viewModel.uiState.collectAsStateWithLifecycle()
+    val searchForm by viewModel.searchForm.collectAsStateWithLifecycle()
 
     Scaffold(
         bottomBar = { FlightBottomNavBar() },
         containerColor = MaterialTheme.colorScheme.background
     ) { innerPadding ->
         FlightSearchScreen(
-            recentSearches = recentSearches,
-            uiState = uiState,
-            onRetry = flightSearchMainScreenViewModel::getHotOffers,
-            contentPadding = innerPadding
+            hotOffersUiState = hotOffersState,
+            searchForm = searchForm,
+            onOriginClick = viewModel::openOriginSheet,
+            onDestinationClick = viewModel::openDestinationSheet,
+            onDateClick = viewModel::openDateSheet,
+            onPassengersClick = viewModel::openPassengersSheet,
+            onSearchClick = { viewModel.onSearchClicked(onNavigateToResults) },
+            onRetry = viewModel::getHotOffers,
+            contentPadding = innerPadding,
+            recentSearches = recentSearches
         )
+    }
+
+
+    when (searchForm.activeSheet) {
+        ActiveSheet.ORIGIN -> AirportPickerSheet(
+            title = "Откуда",
+            query = searchForm.airportQuery,
+            searchState = searchForm.airportSearchState,
+            onQueryChange = viewModel::onAirportQueryChanged,
+            onAirportSelected = viewModel::selectAirport,
+            onDismiss = viewModel::closeSheet
+        )
+
+        ActiveSheet.DESTINATION -> AirportPickerSheet(
+            title = "Куда",
+            query = searchForm.airportQuery,
+            searchState = searchForm.airportSearchState,
+            onQueryChange = viewModel::onAirportQueryChanged,
+            onAirportSelected = viewModel::selectAirport,
+            onDismiss = viewModel::closeSheet
+        )
+
+        ActiveSheet.DATE -> DatePickerSheet(
+            selectedDate = searchForm.departureDate?.let { LocalDate.parse(it) },
+            onDateSelected = viewModel::selectDate,
+            onDismiss = viewModel::closeSheet
+        )
+
+        ActiveSheet.PASSENGERS -> PassengerPickerSheet(
+            passengers = searchForm.passengers,
+            onIncrementAdults = viewModel::incrementAdults,
+            onDecrementAdults = viewModel::decrementAdults,
+            onIncrementChildren = viewModel::incrementChildren,
+            onDecrementChildren = viewModel::decrementChildren,
+            onConfirm = viewModel::confirmPassengers,
+            onDismiss = viewModel::closeSheet
+        )
+
+        ActiveSheet.NONE -> Unit
     }
 }
 
@@ -111,50 +165,52 @@ fun FlightSearchRoot(
 @Composable
 fun FlightSearchScreen(
     recentSearches: List<RecentSearch>,
-    uiState: HotOffersUiState,
+    hotOffersUiState: HotOffersUiState,
+    searchForm: SearchFormState,
+    onOriginClick: () -> Unit,
+    onDestinationClick: () -> Unit,
+    onDateClick: () -> Unit,
+    onPassengersClick: () -> Unit,
+    onSearchClick: () -> Unit,
     onRetry: () -> Unit,
     contentPadding: PaddingValues = PaddingValues(0.dp)
 ) {
-    var origin by remember { mutableStateOf("Москва (SVO)") }
-    var destination by remember { mutableStateOf("") }
-    var dateDepart by remember { mutableStateOf("") }
-    var passengers by remember { mutableStateOf("") }
-
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = contentPadding
     ) {
         item {
             SearchSection(
-                origin = origin,
-                destination = destination,
-                dateDepart = dateDepart,
-                passengers = passengers,
-                onSearch = {}
+                searchForm = searchForm,
+                onOriginClick = onOriginClick,
+                onDestinationClick = onDestinationClick,
+                onDateClick = onDateClick,
+                onPassengersClick = onPassengersClick,
+                onSearchClick = onSearchClick
             )
         }
 
-//        if (recentSearches.isNotEmpty()) {
-//            item {
-//                SectionHeader(icon = Icons.Outlined.Schedule, title = stringResource(R.string.section_header_recent_searches))
-//            }
-//            item {
-//                RecentSearchList(searches = recentSearches.take(3))
-//            }
-//        }
+        if (recentSearches.isNotEmpty()) {
+            item {
+                SectionHeader(icon = Icons.Outlined.Schedule, title = stringResource(R.string.section_header_recent_searches))
+            }
+            item {
+                RecentSearchList(searches = recentSearches.take(3))
+            }
+        }
 
         item {
             SectionHeader(icon = Icons.Outlined.LocalFireDepartment, title = stringResource(R.string.section_header_hot_offers))
         }
 
-        when (uiState){
+        when (hotOffersUiState){
             is HotOffersUiState.Success -> item {
-                HotOffersPager(offers = uiState.hotOffers)
+                HotOffersPager(offers = hotOffersUiState.hotOffers)
                 Spacer(modifier = Modifier.height(16.dp))
             }
             else -> item {
                 HotOffersErrorOrLoad(
-                    uiState,
+                    hotOffersUiState,
                     onRetry
                 )
             }
@@ -164,11 +220,12 @@ fun FlightSearchScreen(
 
 @Composable
 private fun SearchSection(
-    origin: String,
-    destination: String,
-    dateDepart: String,
-    passengers: String,
-    onSearch: () -> Unit
+    searchForm: SearchFormState,
+    onOriginClick: () -> Unit,
+    onDestinationClick: () -> Unit,
+    onDateClick: () -> Unit,
+    onPassengersClick: () -> Unit,
+    onSearchClick: () -> Unit
 ) {
     Box(
         modifier = Modifier
@@ -188,41 +245,42 @@ private fun SearchSection(
 
                 SearchField(
                     label = stringResource(R.string.departure_search_field_label),
-                    value = origin,
+                    value = searchForm.departureLabel,
                     icon = Icons.Outlined.FlightTakeoff,
                     placeholder = stringResource(R.string.search_field_placeholder),
-                    onClick = {}
+                    onClick = onOriginClick
                 )
 
                 SearchField(
                     label = stringResource(R.string.arrival_search_field_label),
-                    value = destination,
+                    value = searchForm.arrivalLabel,
                     icon = Icons.Outlined.FlightLand,
                     placeholder = stringResource(R.string.search_field_placeholder),
-                    onClick = {}
+                    onClick = onDestinationClick
                 )
 
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     SmallField(
                         modifier = Modifier.weight(1f),
                         label = stringResource(R.string.flight_date_label),
-                        value = dateDepart,
+                        value = searchForm.departureDate?.toDayAndMonth()
+                            ?: "",
                         icon = Icons.Outlined.CalendarMonth,
                         placeholder = stringResource(R.string.flight_date_placeholder),
-                        onClick = {}
+                        onClick = onDateClick
                     )
                     SmallField(
                         modifier = Modifier.weight(1f),
                         label = stringResource(R.string.passengers_field_label),
-                        value = passengers,
+                        value = searchForm.passengersLabel,
                         icon = Icons.Outlined.Person,
                         placeholder = stringResource(R.string.passengers_field_placeholder),
-                        onClick = {}
+                        onClick = onPassengersClick
                     )
                 }
 
                 Button(
-                    onClick = onSearch,
+                    onClick = onSearchClick,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(56.dp),
@@ -484,10 +542,15 @@ private fun HotOfferCard(offer: HotOffer) {
                 ) {
                     Column(horizontalAlignment = Alignment.Start) {
                         Text(
-                            text = offer.departureCity,
+                            text = offer.departureCity
+                                .replace(" ", "\n")
+                                .replace("–", "\n"),
                             fontSize = 15.sp,
                             fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.onSurface
+                            color = MaterialTheme.colorScheme.onSurface,
+                            softWrap = true,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis
                         )
                         Text(
                             text = offer.departureAirport,
@@ -546,7 +609,7 @@ private fun HotOfferCard(offer: HotOffer) {
                             verticalAlignment = Alignment.CenterVertically
                         ){
                             Text(
-                                text = offer.departureDate.toDayAndMonth(LocalLocale.current.platformLocale.language),
+                                text = offer.departureDate,
                                 fontSize = 12.sp,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
@@ -559,7 +622,7 @@ private fun HotOfferCard(offer: HotOffer) {
                             )
                             Spacer(modifier = Modifier.weight(1f))
                             Text(
-                                text = offer.arrivalDate.toDayAndMonth(LocalLocale.current.platformLocale.language),
+                                text = offer.arrivalDate,
                                 fontSize = 12.sp,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
@@ -567,10 +630,13 @@ private fun HotOfferCard(offer: HotOffer) {
                     }
                     Column(horizontalAlignment = Alignment.End) {
                         Text(
-                            text = offer.arrivalCity,
+                            text = offer.arrivalCity.replace(" ", "\n").replace("–", "\n"),
                             fontSize = 15.sp,
                             fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.onSurface
+                            color = MaterialTheme.colorScheme.onSurface,
+                            softWrap = true,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis
                         )
                         Text(
                             text = offer.arrivalAirport,
@@ -748,8 +814,15 @@ fun FlightSearchScreenPreview() {
     JetGoTheme {
         FlightSearchScreen(
             recentSearches = recentSearches,
-            uiState = HotOffersUiState.Error("Error network"),
-            onRetry = { }
+            onRetry = { },
+            hotOffersUiState = HotOffersUiState.Error("Error"),
+            searchForm = SearchFormState(),
+            onOriginClick = { },
+            onDestinationClick = { },
+            onDateClick = { },
+            onPassengersClick = { },
+            onSearchClick = { },
+            contentPadding = PaddingValues(0.dp)
         )
     }
 }

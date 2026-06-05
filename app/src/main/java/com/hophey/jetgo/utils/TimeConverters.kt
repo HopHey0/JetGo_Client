@@ -1,10 +1,10 @@
 package com.hophey.jetgo.utils
 
 import java.time.Duration
+import java.time.LocalDate
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
-import java.util.Locale
 
 fun String.toAirportLocalTime(utcDiff: Int): String {
     return try {
@@ -31,11 +31,23 @@ fun String.getTimeDiffInHoursFormatted(otherTime: String): String {
     }
 }
 
-fun String.toDayAndMonth(locale: String): String {
+fun String.toDayAndMonth(utcDiff: Int): String {
     return try {
         val utcDateTime = OffsetDateTime.parse(this)
-        utcDateTime.format(DateTimeFormatter.ofPattern("dd MMMM", Locale(locale)))
+        val zoneOffset = ZoneOffset.ofHours(utcDiff)
+        val airportLocalTime = utcDateTime.withOffsetSameInstant(zoneOffset)
+        airportLocalTime.format(DateTimeFormatter.ofPattern("dd MMMM"))
     } catch (e: Exception) {
+        this
+    }
+}
+
+fun String.toDayAndMonth(): String{
+    return try {
+        val formatter = DateTimeFormatter.ofPattern("dd MMMM")
+        val date = LocalDate.parse(this)
+        date.format(formatter)
+    } catch (e: Exception){
         this
     }
 }

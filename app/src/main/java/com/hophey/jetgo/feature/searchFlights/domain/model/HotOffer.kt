@@ -3,6 +3,7 @@ package com.hophey.jetgo.feature.searchFlights.domain.model
 import com.hophey.jetgo.feature.searchFlights.data.dto.FlightDto
 import com.hophey.jetgo.utils.getTimeDiffInHoursFormatted
 import com.hophey.jetgo.utils.toAirportLocalTime
+import com.hophey.jetgo.utils.toDayAndMonth
 import java.time.OffsetDateTime
 
 data class HotOffer(
@@ -28,12 +29,12 @@ fun FlightDto.toDomain() = HotOffer(
     id = this.id,
     price = this.price.toInt(),
     priceWithDiscount = (this.price * (1 - (this.discountRate))).toInt(),
-    departureDate = this.departureTime,
+    departureDate = this.departureTime.toDayAndMonth(departureUtcDiff),
     departureTime = this.departureTime.toAirportLocalTime(this.departureUtcDiff),
     departureAirport = this.departureAirport,
     departureCity = this.departureCity,
     arrivalTime = this.arrivalTime.toAirportLocalTime(this.arrivalUtcDiff),
-    arrivalDate = this.arrivalTime,
+    arrivalDate = this.arrivalTime.toDayAndMonth(arrivalUtcDiff),
     arrivalAirport = this.arrivalAirport,
     arrivalCity = this.arrivalCity,
     arrivalCountry = this.arrivalCountry,
