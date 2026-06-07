@@ -1,3 +1,19 @@
 <resources>
     <string name="app_name">JetGo</string>
+
+    <string name="departure_search_field_label">Откуда</string>
+    <string name="search_field_placeholder">Город или аэропорт</string>
+    <string name="arrival_search_field_label">Куда</string>
+    <string name="flight_date_label">Когда</string>
+    <string name="flight_date_placeholder">23 июня</string>
+    <string name="passengers_field_label">Пассажиры</string>
+    <string name="passengers_field_placeholder">1</string>
+    <string name="search_button_text">Найти билеты</string>
+
+    <string name="recent_searches_passengers_amount">пасс.</string>
+    <string name="travel_time_text">ч. в пути</string>
+
+    <string name="section_header_hot_offers">Горячие предложения</string>
+    <string name="section_header_recent_searches">Вы недавно искали</string>
+    <string name="hot_offer_percent_text">Скидка</string>
 </resources>
