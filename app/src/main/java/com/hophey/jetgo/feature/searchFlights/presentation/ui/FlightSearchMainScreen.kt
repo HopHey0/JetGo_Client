@@ -23,8 +23,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Cancel
 import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.outlined.CalendarMonth
-import androidx.compose.material.icons.outlined.ConfirmationNumber
 import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material.icons.outlined.Flight
 import androidx.compose.material.icons.outlined.FlightLand
@@ -69,6 +69,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import com.hophey.jetgo.R
 import com.hophey.jetgo.feature.searchFlights.domain.model.Flight
+import com.hophey.jetgo.feature.searchFlights.domain.model.RecentSearch
 import com.hophey.jetgo.feature.searchFlights.presentation.ui.bottomSheets.AirportPickerSheet
 import com.hophey.jetgo.feature.searchFlights.presentation.ui.bottomSheets.DatePickerSheet
 import com.hophey.jetgo.feature.searchFlights.presentation.ui.bottomSheets.PassengerPickerSheet
@@ -82,19 +83,6 @@ import com.hophey.jetgo.utils.toDayAndMonth
 import kotlinx.datetime.LocalDate
 import org.koin.androidx.compose.koinViewModel
 
-data class RecentSearch(
-    val origin: String,
-    val destination: String,
-    val date: String,
-    val passengers: Int
-)
-
-val recentSearches = listOf(
-    RecentSearch("Москва", "Белград", "16 мая", 2),
-    RecentSearch("Белград", "Москва", "20 мая", 1),
-    RecentSearch("Москва", "Стамбул", "1 июня", 3)
-)
-
 @Composable
 fun FlightSearchRoot(
     onNavigateToResults: (FlightSearchParams) -> Unit = {},
@@ -102,6 +90,7 @@ fun FlightSearchRoot(
 ) {
     val hotOffersState by viewModel.uiState.collectAsStateWithLifecycle()
     val searchForm by viewModel.searchForm.collectAsStateWithLifecycle()
+    val recentSearches by viewModel.recentSearches.collectAsStateWithLifecycle()
 
     Scaffold(
         bottomBar = { FlightBottomNavBar() },
@@ -117,7 +106,11 @@ fun FlightSearchRoot(
             onSearchClick = { viewModel.onSearchClicked(onNavigateToResults) },
             onRetry = viewModel::getHotOffers,
             contentPadding = innerPadding,
-            recentSearches = recentSearches
+            recentSearches = recentSearches,
+            onRecentSearchClick = { search ->
+                viewModel.onRecentSearchClicked(search, onNavigateToResults)
+            },
+            onClearHistory = viewModel::onClearHistory
         )
     }
 
@@ -173,6 +166,8 @@ fun FlightSearchScreen(
     onPassengersClick: () -> Unit,
     onSearchClick: () -> Unit,
     onRetry: () -> Unit,
+    onRecentSearchClick: (RecentSearch) -> Unit,
+    onClearHistory: () -> Unit,
     contentPadding: PaddingValues = PaddingValues(0.dp)
 ) {
     LazyColumn(
@@ -192,10 +187,18 @@ fun FlightSearchScreen(
 
         if (recentSearches.isNotEmpty()) {
             item {
-                SectionHeader(icon = Icons.Outlined.Schedule, title = stringResource(R.string.section_header_recent_searches))
+                SectionHeader(
+                    icon = Icons.Outlined.Schedule,
+                    title = stringResource(R.string.section_header_recent_searches),
+                    trailingIcon = Icons.Filled.Delete,
+                    trailingIconAction = onClearHistory
+                )
             }
             item {
-                RecentSearchList(searches = recentSearches.take(3))
+                RecentSearchList(
+                    searches = recentSearches.take(3),
+                    onSearchClick = onRecentSearchClick
+                )
             }
         }
 
@@ -302,8 +305,12 @@ private fun SearchSection(
     }
 }
 
+
 @Composable
-private fun RecentSearchList(searches: List<RecentSearch>) {
+private fun RecentSearchList(
+    searches: List<RecentSearch>,
+    onSearchClick: (RecentSearch) -> Unit
+) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -317,7 +324,7 @@ private fun RecentSearchList(searches: List<RecentSearch>) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable { }
+                        .clickable { onSearchClick(search) }
                         .padding(horizontal = 16.dp, vertical = 14.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -330,13 +337,13 @@ private fun RecentSearchList(searches: List<RecentSearch>) {
                     Spacer(modifier = Modifier.width(14.dp))
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "${search.origin} → ${search.destination}",
+                            text = "${search.departureCity} (${search.departureCode}) — ${search.arrivalCity} (${search.arrivalCode})",
                             fontSize = 15.sp,
                             fontWeight = FontWeight.SemiBold,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
-                            text = "${search.date}  •  ${search.passengers} " + stringResource(R.string.recent_searches_passengers_amount),
+                            text = "${search.date.toDayAndMonth()}  •  ${search.passengers} " + stringResource(R.string.recent_searches_passengers_amount),
                             fontSize = 13.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -753,7 +760,12 @@ private fun SmallField(
 }
 
 @Composable
-private fun SectionHeader(icon: ImageVector, title: String) {
+private fun SectionHeader(
+    icon: ImageVector,
+    title: String,
+    trailingIcon: ImageVector? = null,
+    trailingIconAction: () -> Unit = {}
+) {
     Row(
         modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 20.dp, bottom = 8.dp),
         verticalAlignment = Alignment.CenterVertically
@@ -764,13 +776,28 @@ private fun SectionHeader(icon: ImageVector, title: String) {
             tint = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.size(18.dp)
         )
+
         Spacer(modifier = Modifier.width(8.dp))
+
         Text(
             text = title,
             fontSize = 14.sp,
             fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
+        if (trailingIcon != null) {
+            Spacer(modifier = Modifier.weight(1f))
+
+            IconButton(
+                onClick = { trailingIconAction() }
+            ) {
+                Icon(
+                    modifier = Modifier.size(24.dp),
+                    imageVector = trailingIcon,
+                    contentDescription = null
+                )
+            }
+        }
     }
 }
 
@@ -780,7 +807,7 @@ fun FlightBottomNavBar() {
     val items = listOf(
         Icons.Outlined.Search to "Поиск",
         Icons.Outlined.FavoriteBorder to "Избранное",
-        Icons.Outlined.ConfirmationNumber to "Заказы",
+//        Icons.Outlined.ConfirmationNumber to "Заказы",
         Icons.Outlined.Person to "Профиль"
     )
     NavigationBar(
@@ -815,7 +842,7 @@ fun FlightBottomNavBar() {
 fun FlightSearchScreenPreview() {
     JetGoTheme {
         FlightSearchScreen(
-            recentSearches = recentSearches,
+            recentSearches = emptyList(),
             onRetry = { },
             hotOffersUiState = HotOffersUiState.Error("Error"),
             searchForm = SearchFormState(),
@@ -824,7 +851,9 @@ fun FlightSearchScreenPreview() {
             onDateClick = { },
             onPassengersClick = { },
             onSearchClick = { },
-            contentPadding = PaddingValues(0.dp)
+            contentPadding = PaddingValues(0.dp),
+            onRecentSearchClick = {  },
+            onClearHistory = { }
         )
     }
 }

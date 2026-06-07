@@ -3,7 +3,11 @@ package com.hophey.jetgo.feature.searchFlights.presentation.viewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.hophey.jetgo.feature.searchFlights.domain.model.Airport
+import com.hophey.jetgo.feature.searchFlights.domain.model.RecentSearch
+import com.hophey.jetgo.feature.searchFlights.domain.usecase.ClearSearchHistoryUseCase
 import com.hophey.jetgo.feature.searchFlights.domain.usecase.GetHotOffersUseCase
+import com.hophey.jetgo.feature.searchFlights.domain.usecase.GetRecentSearchesUseCase
+import com.hophey.jetgo.feature.searchFlights.domain.usecase.SaveRecentSearchUseCase
 import com.hophey.jetgo.feature.searchFlights.domain.usecase.SearchAirportsUseCase
 import com.hophey.jetgo.feature.searchFlights.presentation.viewModel.states.ActiveSheet
 import com.hophey.jetgo.feature.searchFlights.presentation.viewModel.states.AirportSheetState
@@ -12,6 +16,7 @@ import com.hophey.jetgo.feature.searchFlights.presentation.viewModel.states.HotO
 import com.hophey.jetgo.feature.searchFlights.presentation.viewModel.states.SearchFormState
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.debounce
@@ -19,15 +24,18 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 
-
 @OptIn(FlowPreview::class)
 class FlightSearchMainScreenViewModel(
     private val getHotOffersUseCase: GetHotOffersUseCase,
-    private val searchAirportsUseCase: SearchAirportsUseCase
+    private val searchAirportsUseCase: SearchAirportsUseCase,
+    private val saveRecentSearchUseCase: SaveRecentSearchUseCase,
+    private val clearSearchHistoryUseCase: ClearSearchHistoryUseCase,
+    getRecentSearchesUseCase: GetRecentSearchesUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<HotOffersUiState>(HotOffersUiState.Loading)
@@ -36,6 +44,8 @@ class FlightSearchMainScreenViewModel(
     private val _searchForm = MutableStateFlow(SearchFormState())
     val searchForm: StateFlow<SearchFormState> = _searchForm.asStateFlow()
 
+    val recentSearches: StateFlow<List<RecentSearch>> = getRecentSearchesUseCase()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     init {
         getHotOffers()
@@ -60,9 +70,7 @@ class FlightSearchMainScreenViewModel(
     }
 
     fun openDateSheet() = _searchForm.update { it.copy(activeSheet = ActiveSheet.DATE) }
-
     fun openPassengersSheet() = _searchForm.update { it.copy(activeSheet = ActiveSheet.PASSENGERS) }
-
     fun closeSheet() = _searchForm.update { it.copy(activeSheet = ActiveSheet.NONE) }
 
     fun onAirportQueryChanged(query: String) = _searchForm.update {
@@ -123,23 +131,53 @@ class FlightSearchMainScreenViewModel(
     fun incrementChildren() = _searchForm.update { it.copy(passengers = it.passengers.incrementChildren()) }
     fun decrementChildren() = _searchForm.update { it.copy(passengers = it.passengers.decrementChildren()) }
 
-    fun confirmPassengers() = _searchForm.update {
-        it.copy(activeSheet = ActiveSheet.NONE)
-    }
-
+    fun confirmPassengers() = _searchForm.update { it.copy(activeSheet = ActiveSheet.NONE) }
 
     fun onSearchClicked(onNavigate: (FlightSearchParams) -> Unit) {
         val form = _searchForm.value
         val origin = form.departureAirport ?: return
         val destination = form.arrivalAirport ?: return
         val date = form.departureDate ?: return
-        val params = FlightSearchParams(
-            departureCity = origin.code,
-            arrivalCity = destination.code,
-            departureDate = LocalDate.parse(date),
-            passengers = form.passengers.total
+
+        viewModelScope.launch {
+            saveRecentSearchUseCase(
+                RecentSearch(
+                    departureCode = origin.code,
+                    departureCity = origin.cityName,
+                    arrivalCode = destination.code,
+                    arrivalCity = destination.cityName,
+                    date = date,
+                    passengers = form.passengers.total
+                )
+            )
+        }
+
+        onNavigate(
+            FlightSearchParams(
+                departureCity = origin.code,
+                arrivalCity = destination.code,
+                departureDate = LocalDate.parse(date),
+                passengers = form.passengers.total
+            )
         )
-        onNavigate(params)
+    }
+
+    fun onRecentSearchClicked(
+        search: RecentSearch,
+        onNavigate: (FlightSearchParams) -> Unit
+    ) {
+        onNavigate(
+            FlightSearchParams(
+                departureCity = search.departureCode,
+                arrivalCity = search.arrivalCode,
+                departureDate = LocalDate.parse(search.date),
+                passengers = search.passengers
+            )
+        )
+    }
+
+    fun onClearHistory() = viewModelScope.launch{
+        clearSearchHistoryUseCase()
     }
 
     private fun SearchFormState.recalculateCanSearch(): SearchFormState =
