@@ -3,8 +3,6 @@ package com.hophey.jetgo.feature.searchFlights.presentation.viewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.hophey.jetgo.feature.searchFlights.domain.model.Airport
-import com.hophey.jetgo.feature.searchFlights.domain.model.HotOffer
-import com.hophey.jetgo.feature.searchFlights.domain.model.PassengerCount
 import com.hophey.jetgo.feature.searchFlights.domain.usecase.GetHotOffersUseCase
 import com.hophey.jetgo.feature.searchFlights.domain.usecase.SearchAirportsUseCase
 import com.hophey.jetgo.feature.searchFlights.presentation.viewModel.states.ActiveSheet
@@ -12,7 +10,6 @@ import com.hophey.jetgo.feature.searchFlights.presentation.viewModel.states.Airp
 import com.hophey.jetgo.feature.searchFlights.presentation.viewModel.states.FlightSearchParams
 import com.hophey.jetgo.feature.searchFlights.presentation.viewModel.states.HotOffersUiState
 import com.hophey.jetgo.feature.searchFlights.presentation.viewModel.states.SearchFormState
-import com.hophey.jetgo.utils.toDayAndMonth
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -25,7 +22,6 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
-
 
 
 @OptIn(FlowPreview::class)
@@ -137,13 +133,13 @@ class FlightSearchMainScreenViewModel(
         val origin = form.departureAirport ?: return
         val destination = form.arrivalAirport ?: return
         val date = form.departureDate ?: return
-
         val params = FlightSearchParams(
             departureCity = origin.code,
             arrivalCity = destination.code,
             departureDate = LocalDate.parse(date),
-            passengers = form.passengers
+            passengers = form.passengers.total
         )
+        onNavigate(params)
     }
 
     private fun SearchFormState.recalculateCanSearch(): SearchFormState =

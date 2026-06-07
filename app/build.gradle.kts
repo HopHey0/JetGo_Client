@@ -64,7 +64,7 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.ktx)
 
     // Navigation dependency
-    implementation(libs.androidx.navigation.compose)
+    implementation("androidx.navigation:navigation-compose:2.8.9")
 
     // JSON serialization dependency
     implementation(libs.kotlinx.serialization.json)

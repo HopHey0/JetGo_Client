@@ -4,11 +4,11 @@ import com.hophey.jetgo.feature.searchFlights.data.dto.FlightDto
 import com.hophey.jetgo.utils.getTimeDiffInHoursFormatted
 import com.hophey.jetgo.utils.toAirportLocalTime
 import com.hophey.jetgo.utils.toDayAndMonth
-import java.time.OffsetDateTime
 
-data class HotOffer(
+data class Flight(
     val id: Long,
     val price: Int,
+    val flightNum: String,
     val priceWithDiscount: Int,
     val departureDate: String,
     val departureTime: String,
@@ -25,9 +25,10 @@ data class HotOffer(
     val timeTravel: String
 )
 
-fun FlightDto.toDomain() = HotOffer(
+fun FlightDto.toDomain() = Flight(
     id = this.id,
     price = this.price.toInt(),
+    flightNum = this.flightNumber,
     priceWithDiscount = (this.price * (1 - (this.discountRate))).toInt(),
     departureDate = this.departureTime.toDayAndMonth(departureUtcDiff),
     departureTime = this.departureTime.toAirportLocalTime(this.departureUtcDiff),

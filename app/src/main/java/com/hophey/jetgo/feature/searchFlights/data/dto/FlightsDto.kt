@@ -1,7 +1,7 @@
 package com.hophey.jetgo.feature.searchFlights.data.dto
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-
 
 @Serializable
 data class FlightDto(
@@ -25,5 +25,14 @@ data class FlightDto(
 
 @Serializable
 data class OffersResponse(
+    @SerialName("offers")
     val offers: List<FlightDto>
+)
+
+@Serializable
+data class FlightsRequest(
+    val departureCity: String,
+    val arrivalCity: String,
+    val departureDate: String,
+    val personAmount: Int
 )

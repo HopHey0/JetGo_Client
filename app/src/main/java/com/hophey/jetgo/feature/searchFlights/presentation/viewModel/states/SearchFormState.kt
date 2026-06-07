@@ -4,15 +4,16 @@ import com.hophey.jetgo.feature.searchFlights.domain.model.Airport
 import com.hophey.jetgo.feature.searchFlights.domain.model.CitySearchResult
 import com.hophey.jetgo.feature.searchFlights.domain.model.PassengerCount
 import kotlinx.datetime.LocalDate
+import kotlinx.serialization.Serializable
 
 enum class ActiveSheet { NONE, ORIGIN, DESTINATION, DATE, PASSENGERS }
 
-
+@Serializable
 data class FlightSearchParams(
     val departureCity: String,
     val arrivalCity: String,
     val departureDate: LocalDate,
-    val passengers: PassengerCount
+    val passengers: Int
 )
 data class SearchFormState(
     val departureAirport: Airport? = null,

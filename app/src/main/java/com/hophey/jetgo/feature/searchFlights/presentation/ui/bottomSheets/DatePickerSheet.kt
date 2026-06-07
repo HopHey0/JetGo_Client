@@ -1,7 +1,5 @@
 package com.hophey.jetgo.feature.searchFlights.presentation.ui.bottomSheets
 
-import androidx.compose.foundation.gestures.Orientation
-import androidx.compose.foundation.gestures.scrollable
 import kotlin.time.ExperimentalTime
 
 import androidx.compose.foundation.layout.Column
@@ -34,7 +32,6 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
 import kotlinx.datetime.toLocalDateTime
-import java.time.format.DateTimeFormatter
 import kotlin.time.Clock
 import kotlin.time.Instant
 
@@ -87,19 +84,6 @@ fun DatePickerSheet(
                 colors = DatePickerDefaults.colors(
                     containerColor = MaterialTheme.colorScheme.background,
                     titleContentColor = MaterialTheme.colorScheme.onBackground,
-                    headlineContentColor = MaterialTheme.colorScheme.primary,
-                    weekdayContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                    subheadContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                    navigationContentColor = MaterialTheme.colorScheme.onSurface,
-                    yearContentColor = MaterialTheme.colorScheme.onSurface,
-                    currentYearContentColor = MaterialTheme.colorScheme.primary,
-                    selectedYearContentColor = MaterialTheme.colorScheme.onPrimary,
-                    selectedYearContainerColor = MaterialTheme.colorScheme.primary,
-                    dayContentColor = MaterialTheme.colorScheme.onSurface,
-                    selectedDayContentColor = MaterialTheme.colorScheme.onPrimary,
-                    selectedDayContainerColor = MaterialTheme.colorScheme.primary,
-                    todayContentColor = MaterialTheme.colorScheme.primary,
-                    todayDateBorderColor = MaterialTheme.colorScheme.primary
                 )
             )
 

@@ -68,7 +68,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import com.hophey.jetgo.R
-import com.hophey.jetgo.feature.searchFlights.domain.model.HotOffer
+import com.hophey.jetgo.feature.searchFlights.domain.model.Flight
 import com.hophey.jetgo.feature.searchFlights.presentation.ui.bottomSheets.AirportPickerSheet
 import com.hophey.jetgo.feature.searchFlights.presentation.ui.bottomSheets.DatePickerSheet
 import com.hophey.jetgo.feature.searchFlights.presentation.ui.bottomSheets.PassengerPickerSheet
@@ -280,7 +280,8 @@ private fun SearchSection(
                 }
 
                 Button(
-                    onClick = onSearchClick,
+                    enabled = searchForm.canSearch,
+                    onClick = { onSearchClick() },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(56.dp),
@@ -436,7 +437,7 @@ private fun HotOffersErrorOrLoad(
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun HotOffersPager(
-    offers: List<HotOffer>
+    offers: List<Flight>
 ) {
     val pagerState = rememberPagerState { offers.size }
 
@@ -475,7 +476,7 @@ private fun HotOffersPager(
 }
 
 @Composable
-private fun HotOfferCard(offer: HotOffer) {
+private fun HotOfferCard(offer: Flight) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -542,9 +543,7 @@ private fun HotOfferCard(offer: HotOffer) {
                 ) {
                     Column(horizontalAlignment = Alignment.Start) {
                         Text(
-                            text = offer.departureCity
-                                .replace(" ", "\n")
-                                .replace("–", "\n"),
+                            text = offer.departureCity.replace(Regex("[\\s\\-–—―‐‑‒⁃﹘﹣－]+"), "-\n"),
                             fontSize = 15.sp,
                             fontWeight = FontWeight.SemiBold,
                             color = MaterialTheme.colorScheme.onSurface,
@@ -571,6 +570,15 @@ private fun HotOfferCard(offer: HotOffer) {
                                 text = offer.departureTime,
                                 fontSize = 12.sp,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+
+                            Spacer(modifier = Modifier.weight(1f))
+
+                            Text(
+                                text = "${offer.timeTravel} " + stringResource(R.string.travel_time_text),
+                                fontSize = 11.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(top = 2.dp)
                             )
 
                             Spacer(modifier = Modifier.weight(1f))
@@ -615,13 +623,6 @@ private fun HotOfferCard(offer: HotOffer) {
                             )
                             Spacer(modifier = Modifier.weight(1f))
                             Text(
-                                text = "${offer.timeTravel} " + stringResource(R.string.travel_time_text),
-                                fontSize = 11.sp,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.padding(top = 2.dp)
-                            )
-                            Spacer(modifier = Modifier.weight(1f))
-                            Text(
                                 text = offer.arrivalDate,
                                 fontSize = 12.sp,
                                 color = MaterialTheme.colorScheme.onSurface
@@ -630,7 +631,7 @@ private fun HotOfferCard(offer: HotOffer) {
                     }
                     Column(horizontalAlignment = Alignment.End) {
                         Text(
-                            text = offer.arrivalCity.replace(" ", "\n").replace("–", "\n"),
+                            text = offer.arrivalCity.replace(Regex("[\\s\\-–—―‐‑‒⁃﹘﹣－]+"), "-\n"),
                             fontSize = 15.sp,
                             fontWeight = FontWeight.SemiBold,
                             color = MaterialTheme.colorScheme.onSurface,
@@ -647,6 +648,7 @@ private fun HotOfferCard(offer: HotOffer) {
                 }
             }
         }
+
         Box(
             modifier = Modifier
                 .align(Alignment.TopStart)

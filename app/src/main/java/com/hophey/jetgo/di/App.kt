@@ -10,12 +10,14 @@ import com.hophey.jetgo.feature.searchFlights.domain.repository.AirportRepositor
 import com.hophey.jetgo.feature.searchFlights.domain.repository.FlightRepository
 import com.hophey.jetgo.feature.searchFlights.domain.usecase.GetHotOffersUseCase
 import com.hophey.jetgo.feature.searchFlights.domain.usecase.SearchAirportsUseCase
+import com.hophey.jetgo.feature.searchFlights.domain.usecase.SearchFlightsUseCase
 import com.hophey.jetgo.feature.searchFlights.presentation.viewModel.FlightSearchMainScreenViewModel
+import com.hophey.jetgo.feature.searchFlights.presentation.viewModel.SearchFlightsSharedViewModel
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.GlobalContext.startKoin
 import org.koin.dsl.module
 
-class App: Application() {
+class App : Application() {
     val flightsModule = module {
         single { HttpClientFactory.create() }
 
@@ -27,10 +29,11 @@ class App: Application() {
 
         factory { GetHotOffersUseCase(get()) }
         factory { SearchAirportsUseCase(get()) }
+        factory { SearchFlightsUseCase(get()) }
 
-        single { FlightSearchMainScreenViewModel(get(), get()) }
+        factory { FlightSearchMainScreenViewModel(get(), get()) }
+        factory { SearchFlightsSharedViewModel(get()) }
     }
-
 
     override fun onCreate() {
         super.onCreate()
