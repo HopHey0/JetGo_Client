@@ -7,11 +7,7 @@ plugins {
 
 android {
     namespace = "com.hophey.jetgo"
-    compileSdk {
-        version = release(36) {
-            minorApiLevel = 1
-        }
-    }
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.hophey.jetgo"
@@ -73,7 +69,6 @@ dependencies {
     implementation(libs.androidx.room.ktx)
     androidTestImplementation(libs.androidx.room.testing)
     implementation(libs.androidx.room.runtime)
-    annotationProcessor(libs.androidx.room.compiler)
     ksp(libs.androidx.room.compiler)
 
     // Koin dependencies

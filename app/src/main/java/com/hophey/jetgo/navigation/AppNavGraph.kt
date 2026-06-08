@@ -8,6 +8,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navigation
 import com.hophey.jetgo.feature.auth.presentation.ui.ProfileScreen
 import com.hophey.jetgo.feature.auth.presentation.viewmodel.ProfileViewModel
+import com.hophey.jetgo.feature.favourites.presentation.ui.FavouritesScreen
+import com.hophey.jetgo.feature.favourites.presentation.viewmodel.FavouritesViewModel
 import com.hophey.jetgo.feature.searchFlights.presentation.ui.FlightSearchRoot
 import com.hophey.jetgo.feature.searchFlights.presentation.ui.FoundFlightsScreenRoot
 import com.hophey.jetgo.feature.searchFlights.presentation.viewModel.SearchFlightsSharedViewModel
@@ -44,6 +46,7 @@ fun AppNavGraph(
                     koinViewModel(viewModelStoreOwner = navController.getBackStackEntry<SearchGraph>())
 
                 FoundFlightsScreenRoot(
+                    modifier = modifier,
                     viewModel = sharedViewModel,
                     onBack = { navController.popBackStack() }
                 )
@@ -54,7 +57,17 @@ fun AppNavGraph(
             val profileViewModel: ProfileViewModel = koinViewModel()
 
             ProfileScreen(
+                modifier = modifier,
                 viewModel = profileViewModel
+            )
+        }
+
+        composable<Favourites> {
+            val favouritesViewModel: FavouritesViewModel = koinViewModel()
+
+            FavouritesScreen(
+                modifier = modifier,
+                viewModel = favouritesViewModel
             )
         }
     }

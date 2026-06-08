@@ -37,6 +37,7 @@ import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun ProfileScreen(
+    modifier: Modifier = Modifier,
     viewModel: ProfileViewModel = koinViewModel()
 ) {
     val isLoggedIn by viewModel.isLoggedIn.collectAsStateWithLifecycle()
@@ -45,6 +46,7 @@ fun ProfileScreen(
     val password by viewModel.password.collectAsStateWithLifecycle()
 
     Scaffold(
+        modifier = modifier,
         containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
         Box(

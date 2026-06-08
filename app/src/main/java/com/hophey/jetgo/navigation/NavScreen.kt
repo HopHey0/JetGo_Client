@@ -38,7 +38,12 @@ fun MainScreen(
                         restoreState = true
                     }
                 },
-                navigateToFavourite = { },
+                navigateToFavourite = {
+                    navController.navigate(Favourites) {
+                        launchSingleTop = true
+                        restoreState = true
+                    }
+                },
                 navigateToProfile = {
                     navController.navigate(Profile) {
                         launchSingleTop = true

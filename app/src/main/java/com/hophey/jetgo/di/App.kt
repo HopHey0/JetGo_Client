@@ -1,6 +1,8 @@
 package com.hophey.jetgo.di
 
 import android.app.Application
+import androidx.room.Room
+import com.hophey.jetgo.core.database.AppDatabase
 import com.hophey.jetgo.core.datastorage.SessionStorage
 import com.hophey.jetgo.core.network.HttpClientFactory
 import com.hophey.jetgo.feature.auth.data.api.AuthApi
@@ -11,6 +13,15 @@ import com.hophey.jetgo.feature.auth.domain.usecase.LoginUseCase
 import com.hophey.jetgo.feature.auth.domain.usecase.LogoutUseCase
 import com.hophey.jetgo.feature.auth.domain.usecase.RegisterUseCase
 import com.hophey.jetgo.feature.auth.presentation.viewmodel.ProfileViewModel
+import com.hophey.jetgo.feature.favourites.data.api.FavouritesApi
+import com.hophey.jetgo.feature.favourites.data.repository.FavouriteRepositoryImpl
+import com.hophey.jetgo.feature.favourites.data.repository.TokenRepositoryImpl
+import com.hophey.jetgo.feature.favourites.domain.repository.FavouritesRepository
+import com.hophey.jetgo.feature.favourites.domain.repository.TokenRepository
+import com.hophey.jetgo.feature.favourites.domain.usecase.GetAccessTokenUseCase
+import com.hophey.jetgo.feature.favourites.domain.usecase.GetFavouritesUseCase
+import com.hophey.jetgo.feature.favourites.domain.usecase.ToggleFavouriteUseCase
+import com.hophey.jetgo.feature.favourites.presentation.viewmodel.FavouritesViewModel
 import com.hophey.jetgo.feature.searchFlights.data.api.AirportApi
 import com.hophey.jetgo.feature.searchFlights.data.api.FlightApi
 import com.hophey.jetgo.feature.searchFlights.data.local.datastore.RecentSearchStorage
@@ -43,13 +54,24 @@ class App : Application() {
 
         single { HttpClientFactory.create(get()) }
 
+        single {
+            Room.databaseBuilder(
+                androidContext(),
+                AppDatabase::class.java, "jetgo.db")
+                .build()
+        }
+        single { get<AppDatabase>().favouriteFlightDao() }
+
         single { FlightApi(get()) }
         single { AirportApi(get()) }
         single { AuthApi(get()) }
+        single { FavouritesApi(get()) }
 
         single<FlightRepository> { FlightRepositoryImpl(get()) }
         single<AirportRepository> { AirportRepositoryImpl(get()) }
         single<AuthRepository> { AuthRepositoryImpl(get(), get()) }
+        single<FavouritesRepository> { FavouriteRepositoryImpl(get(), get()) }
+        single<TokenRepository> { TokenRepositoryImpl(get()) }
 
         single<RecentSearchRepository> { RecentSearchRepositoryImpl(get()) }
 
@@ -60,6 +82,10 @@ class App : Application() {
         factory { SearchFlightsUseCase(get()) }
         factory { ClearSearchHistoryUseCase(get()) }
 
+        factory { GetAccessTokenUseCase(get()) }
+        factory { GetFavouritesUseCase(get()) }
+        factory { ToggleFavouriteUseCase(get()) }
+
         factory { LoginUseCase(get()) }
         factory { RegisterUseCase(get()) }
         factory { LogoutUseCase(get()) }
@@ -67,7 +93,8 @@ class App : Application() {
 
         viewModel { ProfileViewModel(get(), get(), get(), get()) }
         viewModel { FlightSearchMainScreenViewModel(get(), get(), get(), get(), get()) }
-        viewModel { SearchFlightsSharedViewModel(get()) }
+        viewModel { SearchFlightsSharedViewModel(get(), get(), get(), get()) }
+        viewModel { FavouritesViewModel(get(), get(), get()) }
     }
 
     override fun onCreate() {

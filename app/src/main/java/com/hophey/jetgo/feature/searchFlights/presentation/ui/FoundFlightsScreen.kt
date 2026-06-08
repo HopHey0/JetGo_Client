@@ -45,6 +45,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import com.hophey.jetgo.R
+import com.hophey.jetgo.core.shared.ui.FlightCard
 import com.hophey.jetgo.feature.searchFlights.domain.model.Flight
 import com.hophey.jetgo.feature.searchFlights.presentation.viewModel.SearchFlightsSharedViewModel
 import com.hophey.jetgo.feature.searchFlights.presentation.viewModel.states.FlightSearchParams
@@ -54,12 +55,15 @@ import com.hophey.jetgo.utils.toDayAndMonth
 @Composable
 fun FoundFlightsScreenRoot(
     viewModel: SearchFlightsSharedViewModel,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val searchParams by viewModel.searchParams.collectAsStateWithLifecycle()
+    val favouritesId by viewModel.favouriteIds.collectAsStateWithLifecycle()
 
     Scaffold(
+        modifier = modifier,
         topBar = {
             FoundFlightsTopBar(
                 searchParams = searchParams,
@@ -76,7 +80,9 @@ fun FoundFlightsScreenRoot(
             onPriceSort = viewModel::sortByPrice,
             onTimeSort = viewModel::sortByTime,
             onDefaultSort = viewModel::sortByDefault,
-            modifier = Modifier.padding(innerPadding)
+            modifier = Modifier.padding(innerPadding),
+            favouritesId = favouritesId,
+            onFavouriteClick = viewModel::toggleFavourite
         )
     }
 }
@@ -84,6 +90,8 @@ fun FoundFlightsScreenRoot(
 @Composable
 fun FoundFlightsScreen(
     uiState: FoundFlightsUiState,
+    favouritesId: List<Long>,
+    onFavouriteClick: (Flight) -> Unit,
     onRetry: () -> Unit,
     onPriceSort: () -> Unit,
     onTimeSort: () -> Unit,
@@ -138,7 +146,11 @@ fun FoundFlightsScreen(
                         onTimeSort = onTimeSort,
                         onDefaultSort = onDefaultSort
                     )
-                    FlightsList(uiState.flights)
+                    FlightsList(
+                        uiState.flights,
+                        favouriteIds = favouritesId,
+                        onFavouriteClick = onFavouriteClick
+                    )
                 }
             }
             is FoundFlightsUiState.Idle -> Unit
@@ -167,163 +179,18 @@ fun SortRow(
 }
 
 @Composable
-fun FlightsList(foundFlights: List<Flight>) {
+fun FlightsList(
+    foundFlights: List<Flight>,
+    favouriteIds: List<Long>,
+    onFavouriteClick: (Flight) -> Unit
+) {
     LazyColumn {
         items(foundFlights) { item ->
-            FlightCard(flight = item)
-        }
-    }
-}
-
-@Composable
-fun FlightCard(flight: Flight) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Spacer(modifier = Modifier.height(8.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.Top
-            ) {
-                Column {
-                    Text(
-                        modifier = Modifier.alpha(0.4f),
-                        text = flight.flightNum,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSecondaryContainer
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = "от ${flight.price} ₽",
-                        fontSize = 24.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = flight.arrivalCountry,
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                }
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    IconButton(
-                        modifier = Modifier.size(24.dp),
-                        onClick = { }
-                    ) {
-                        Icon(
-                            imageVector = Icons.Sharp.Favorite,
-                            contentDescription = null
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    AsyncImage(
-                        model = flight.airlineLogo,
-                        contentDescription = null,
-                        modifier = Modifier.size(56.dp)
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(horizontalAlignment = Alignment.Start) {
-                    Text(
-                        text = flight.departureCity.replace(Regex("[\\s\\-–—―‐‑‒⁃﹘﹣－]+"), "-\n"),
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        softWrap = true,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                    Text(
-                        text = flight.departureAirport,
-                        fontSize = 12.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-
-                Column(
-                    modifier = Modifier
-                        .weight(1f)
-                        .padding(horizontal = 16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(text = flight.departureTime, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        Spacer(modifier = Modifier.weight(1f))
-                        Text(
-                            text = "${flight.timeTravel} " + stringResource(R.string.travel_time_text),
-                            fontSize = 11.sp,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Spacer(modifier = Modifier.weight(1f))
-                        Text(text = flight.arrivalTime, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        HorizontalDivider(
-                            modifier = Modifier
-                                .weight(1f)
-                                .padding(horizontal = 4.dp),
-                            color = MaterialTheme.colorScheme.outlineVariant,
-                            thickness = 1.dp
-                        )
-                        Icon(
-                            imageVector = Icons.Outlined.Flight,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        HorizontalDivider(
-                            modifier = Modifier
-                                .weight(1f)
-                                .padding(horizontal = 4.dp),
-                            color = MaterialTheme.colorScheme.outlineVariant,
-                            thickness = 1.dp
-                        )
-                    }
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(text = flight.departureDate, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurface)
-                        Spacer(modifier = Modifier.weight(1f))
-                        Text(text = flight.arrivalDate, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurface)
-                    }
-                }
-
-                Column(horizontalAlignment = Alignment.End) {
-                    Text(
-                        text = flight.arrivalCity.replace(Regex("[\\s\\-–—―‐‑‒⁃﹘﹣－]+"), "-\n"),
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        softWrap = true,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                    Text(
-                        text = flight.arrivalAirport,
-                        fontSize = 12.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
+            FlightCard(
+                flight = item,
+                isFavourite = item.id in favouriteIds,
+                onFavouriteClick = { onFavouriteClick(item) }
+            )
         }
     }
 }
