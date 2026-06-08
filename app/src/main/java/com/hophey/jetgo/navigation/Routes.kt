@@ -5,3 +5,5 @@ import kotlinx.serialization.Serializable
 @Serializable object SearchGraph
 @Serializable object Search
 @Serializable object SearchResult
+
+@Serializable object Profile

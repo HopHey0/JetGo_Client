@@ -25,6 +25,7 @@ import androidx.compose.material.icons.filled.Cancel
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.outlined.CalendarMonth
+import androidx.compose.material.icons.outlined.ConfirmationNumber
 import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material.icons.outlined.Flight
 import androidx.compose.material.icons.outlined.FlightLand
@@ -85,6 +86,7 @@ import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun FlightSearchRoot(
+    modifier: Modifier = Modifier,
     onNavigateToResults: (FlightSearchParams) -> Unit = {},
     viewModel: FlightSearchMainScreenViewModel = koinViewModel()
 ) {
@@ -92,27 +94,22 @@ fun FlightSearchRoot(
     val searchForm by viewModel.searchForm.collectAsStateWithLifecycle()
     val recentSearches by viewModel.recentSearches.collectAsStateWithLifecycle()
 
-    Scaffold(
-        bottomBar = { FlightBottomNavBar() },
-        containerColor = MaterialTheme.colorScheme.background
-    ) { innerPadding ->
-        FlightSearchScreen(
-            hotOffersUiState = hotOffersState,
-            searchForm = searchForm,
-            onOriginClick = viewModel::openOriginSheet,
-            onDestinationClick = viewModel::openDestinationSheet,
-            onDateClick = viewModel::openDateSheet,
-            onPassengersClick = viewModel::openPassengersSheet,
-            onSearchClick = { viewModel.onSearchClicked(onNavigateToResults) },
-            onRetry = viewModel::getHotOffers,
-            contentPadding = innerPadding,
-            recentSearches = recentSearches,
-            onRecentSearchClick = { search ->
-                viewModel.onRecentSearchClicked(search, onNavigateToResults)
-            },
-            onClearHistory = viewModel::onClearHistory
-        )
-    }
+    FlightSearchScreen(
+        modifier = modifier,
+        hotOffersUiState = hotOffersState,
+        searchForm = searchForm,
+        onOriginClick = viewModel::openOriginSheet,
+        onDestinationClick = viewModel::openDestinationSheet,
+        onDateClick = viewModel::openDateSheet,
+        onPassengersClick = viewModel::openPassengersSheet,
+        onSearchClick = { viewModel.onSearchClicked(onNavigateToResults) },
+        onRetry = viewModel::getHotOffers,
+        recentSearches = recentSearches,
+        onRecentSearchClick = { search ->
+            viewModel.onRecentSearchClicked(search, onNavigateToResults)
+        },
+        onClearHistory = viewModel::onClearHistory
+    )
 
 
     when (searchForm.activeSheet) {
@@ -168,11 +165,10 @@ fun FlightSearchScreen(
     onRetry: () -> Unit,
     onRecentSearchClick: (RecentSearch) -> Unit,
     onClearHistory: () -> Unit,
-    contentPadding: PaddingValues = PaddingValues(0.dp)
+    modifier: Modifier = Modifier,
 ) {
     LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = contentPadding
+        modifier = modifier.fillMaxSize(),
     ) {
         item {
             SearchSection(
@@ -801,37 +797,6 @@ private fun SectionHeader(
     }
 }
 
-@Composable
-fun FlightBottomNavBar() {
-    var selected by remember { mutableIntStateOf(0) }
-    val items = listOf(
-        Icons.Outlined.Search to "Поиск",
-        Icons.Outlined.FavoriteBorder to "Избранное",
-//        Icons.Outlined.ConfirmationNumber to "Заказы",
-        Icons.Outlined.Person to "Профиль"
-    )
-    NavigationBar(
-        containerColor = MaterialTheme.colorScheme.surface,
-        tonalElevation = 8.dp
-    ) {
-        items.forEachIndexed { index, (icon, label) ->
-            NavigationBarItem(
-                selected = selected == index,
-                onClick = { selected = index },
-                icon = { Icon(imageVector = icon, contentDescription = label) },
-                label = { Text(text = label, fontSize = 11.sp) },
-                colors = NavigationBarItemDefaults.colors(
-                    selectedIconColor = MaterialTheme.colorScheme.primary,
-                    selectedTextColor = MaterialTheme.colorScheme.primary,
-                    indicatorColor = MaterialTheme.colorScheme.primaryContainer,
-                    unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                    unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            )
-        }
-    }
-}
-
 @Preview(
     name = "Flight Search Screen",
     showBackground = true,
@@ -851,7 +816,6 @@ fun FlightSearchScreenPreview() {
             onDateClick = { },
             onPassengersClick = { },
             onSearchClick = { },
-            contentPadding = PaddingValues(0.dp),
             onRecentSearchClick = {  },
             onClearHistory = { }
         )

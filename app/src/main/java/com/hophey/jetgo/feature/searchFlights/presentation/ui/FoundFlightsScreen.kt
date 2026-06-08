@@ -1,5 +1,6 @@
 package com.hophey.jetgo.feature.searchFlights.presentation.ui
 
+import android.widget.Space
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,7 +16,9 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.outlined.Favorite
 import androidx.compose.material.icons.outlined.Flight
+import androidx.compose.material.icons.sharp.Favorite
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -212,11 +215,27 @@ fun FlightCard(flight: Flight) {
                         color = MaterialTheme.colorScheme.onSurface
                     )
                 }
-                AsyncImage(
-                    model = flight.airlineLogo,
-                    contentDescription = null,
-                    modifier = Modifier.size(56.dp)
-                )
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    IconButton(
+                        modifier = Modifier.size(24.dp),
+                        onClick = { }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Sharp.Favorite,
+                            contentDescription = null
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    AsyncImage(
+                        model = flight.airlineLogo,
+                        contentDescription = null,
+                        modifier = Modifier.size(56.dp)
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(16.dp))
