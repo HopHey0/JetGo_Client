@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.room.Room
 import com.hophey.jetgo.core.database.AppDatabase
 import com.hophey.jetgo.core.datastorage.SessionStorage
+import com.hophey.jetgo.core.datastorage.ThemeStorage
 import com.hophey.jetgo.core.network.HttpClientFactory
 import com.hophey.jetgo.feature.auth.data.api.AuthApi
 import com.hophey.jetgo.feature.auth.data.repository.AuthRepositoryImpl
@@ -51,6 +52,7 @@ class App : Application() {
     val flightsModule = module {
         single { RecentSearchStorage(androidContext()) }
         single { SessionStorage(androidContext()) }
+        single { ThemeStorage(androidContext()) }
 
         single { HttpClientFactory.create(get()) }
 
@@ -91,7 +93,7 @@ class App : Application() {
         factory { LogoutUseCase(get()) }
         factory { CheckIfLoggedUseCase(get()) }
 
-        viewModel { ProfileViewModel(get(), get(), get(), get()) }
+        viewModel { ProfileViewModel(get(), get(), get(), get(), get()) }
         viewModel { FlightSearchMainScreenViewModel(get(), get(), get(), get(), get()) }
         viewModel { SearchFlightsSharedViewModel(get(), get(), get(), get()) }
         viewModel { FavouritesViewModel(get(), get(), get()) }

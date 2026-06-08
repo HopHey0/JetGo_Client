@@ -1,6 +1,7 @@
 package com.hophey.jetgo.feature.searchFlights.presentation.ui
 
 import android.widget.Space
+import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -32,10 +33,12 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -61,6 +64,15 @@ fun FoundFlightsScreenRoot(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val searchParams by viewModel.searchParams.collectAsStateWithLifecycle()
     val favouritesId by viewModel.favouriteIds.collectAsStateWithLifecycle()
+    val requireAuth by viewModel.requireAuth.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+
+    LaunchedEffect(requireAuth) {
+        if (requireAuth) {
+            Toast.makeText(context, "Войдите в аккаунт, чтобы добавить в избранное", Toast.LENGTH_SHORT).show()
+            viewModel.consumeRequireAuth()
+        }
+    }
 
     Scaffold(
         modifier = modifier,
