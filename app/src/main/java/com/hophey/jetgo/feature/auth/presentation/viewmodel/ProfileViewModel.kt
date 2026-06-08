@@ -2,6 +2,7 @@ package com.hophey.jetgo.feature.auth.presentation.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.hophey.jetgo.core.datastorage.ThemeStorage
 import com.hophey.jetgo.feature.auth.domain.usecase.CheckIfLoggedUseCase
 import com.hophey.jetgo.feature.auth.domain.usecase.LoginUseCase
 import com.hophey.jetgo.feature.auth.domain.usecase.LogoutUseCase
@@ -24,10 +25,15 @@ class ProfileViewModel(
     private val loginUseCase: LoginUseCase,
     private val registerUseCase: RegisterUseCase,
     private val logoutUseCase: LogoutUseCase,
-    checkIfLoggedUseCase: CheckIfLoggedUseCase
+    checkIfLoggedUseCase: CheckIfLoggedUseCase,
+    private val themeStorage: ThemeStorage
 ) : ViewModel() {
 
     val isLoggedIn: StateFlow<Boolean> = checkIfLoggedUseCase()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
+
+    // I WILL CHANGE THAT WITH USECASE IN FUTURE I PROMISE
+    val isDarkTheme: StateFlow<Boolean> = themeStorage.isDarkTheme
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
 
     private val _uiState = MutableStateFlow<ProfileUiState>(ProfileUiState.Idle)
@@ -38,6 +44,10 @@ class ProfileViewModel(
 
     private val _password = MutableStateFlow("")
     val password: StateFlow<String> = _password.asStateFlow()
+
+    fun toggleDarkTheme(enabled: Boolean) {
+        viewModelScope.launch { themeStorage.setDarkTheme(enabled) }
+    }
 
     fun onEmailChanged(newValue: String) {
         _email.value = newValue

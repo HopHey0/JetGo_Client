@@ -7,3 +7,5 @@ import kotlinx.serialization.Serializable
 @Serializable object SearchResult
 
 @Serializable object Profile
+
+@Serializable object Favourites
