@@ -16,6 +16,12 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
+data class SortButtonsState(
+    val isDefaultEnabled: Boolean = true,
+    val isPriceEnabled: Boolean = false,
+    val isTimeEnabled: Boolean = false
+)
+
 class SearchFlightsSharedViewModel(
     private val searchFlightsUseCase: SearchFlightsUseCase,
     private val toggleFavouriteUseCase: ToggleFavouriteUseCase,
@@ -28,6 +34,9 @@ class SearchFlightsSharedViewModel(
 
     private val _searchParams = MutableStateFlow<FlightSearchParams?>(null)
     val searchParams: StateFlow<FlightSearchParams?> = _searchParams.asStateFlow()
+
+    private val _buttonsState = MutableStateFlow<SortButtonsState>(SortButtonsState())
+    val buttonsState = _buttonsState.asStateFlow()
 
     val favouriteIds: StateFlow<List<Long>> = getFavouritesUseCase.ids()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
@@ -52,16 +61,31 @@ class SearchFlightsSharedViewModel(
     fun sortByPrice() {
         val current = _uiState.value as? FoundFlightsUiState.Success ?: return
         _uiState.value = current.copy(flights = current.flights.sortedBy { it.price })
+        _buttonsState.value = _buttonsState.value.copy(
+            isDefaultEnabled = false,
+            isPriceEnabled = true,
+            isTimeEnabled = false
+        )
     }
 
     fun sortByTime() {
         val current = _uiState.value as? FoundFlightsUiState.Success ?: return
         _uiState.value = current.copy(flights = current.flights.sortedBy { it.timeTravel })
+        _buttonsState.value = _buttonsState.value.copy(
+            isDefaultEnabled = false,
+            isPriceEnabled = false,
+            isTimeEnabled = true
+        )
     }
 
     fun sortByDefault() {
         val current = _uiState.value as? FoundFlightsUiState.Success ?: return
         _uiState.value = current.copy(flights = current.flights.sortedBy { it.departureTime })
+        _buttonsState.value = _buttonsState.value.copy(
+            isDefaultEnabled = true,
+            isPriceEnabled = false,
+            isTimeEnabled = false
+        )
     }
 
     fun toggleFavourite(flight: Flight) {
